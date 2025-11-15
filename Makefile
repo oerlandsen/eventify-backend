@@ -16,6 +16,8 @@ db-seed:
 	docker compose exec -T db psql -U eventify -d eventify < app/db/seed.sql
 
 db-drop:
+	docker compose stop api-dev
+	docker compose exec -T db psql -U eventify -d postgres -c "SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity WHERE pg_stat_activity.datname = 'eventify' AND pid <> pg_backend_pid();"
 	docker compose exec -T db psql -U eventify -d postgres -c "DROP DATABASE IF EXISTS eventify;"
 
 db-create:
@@ -27,7 +29,7 @@ db-fix-schema:
 db-reset:
 	docker compose exec -T db psql -U eventify -d postgres -c "DROP DATABASE IF EXISTS eventify;"
 	docker compose exec -T db psql -U eventify -d postgres -c "CREATE DATABASE eventify;"
-	docker compose restart api-dev
+	docker compose start api-dev
 
 db-clear:
 	docker compose exec -T db psql -U eventify -d eventify -c "TRUNCATE TABLE events, venues, neighborhoods CASCADE;"

@@ -14,7 +14,7 @@ class HealthResponse(BaseModel):
 class NeighborhoodBase(BaseModel):
     """Base neighborhood schema."""
     description: str
-    coordinates: List[float] = Field(..., description="Array of coordinate pairs [lat, lon]")
+    coordinates: List[List[float]] = Field(..., description="Array of coordinate pairs [[lat, lon], [lat, lon], ...]")
 
 
 class NeighborhoodCreate(NeighborhoodBase):
@@ -25,7 +25,7 @@ class NeighborhoodCreate(NeighborhoodBase):
 class NeighborhoodUpdate(BaseModel):
     """Schema for updating a neighborhood."""
     description: Optional[str] = None
-    coordinates: Optional[List[float]] = None
+    coordinates: Optional[List[List[float]]] = None
 
 
 class Neighborhood(NeighborhoodBase):
