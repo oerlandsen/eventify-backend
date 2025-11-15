@@ -1,5 +1,5 @@
 """Pydantic schemas for request/response models."""
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List
 from datetime import datetime, time
 
@@ -85,6 +85,22 @@ class EventBase(BaseModel):
     price_range: Optional[List[float]] = Field(None, min_items=2, max_items=2, description="[min_price, max_price]")
     date: str = Field(..., max_length=50)
     venue_id: Optional[int] = None
+    
+    @field_validator('price_range', mode='before')
+    @classmethod
+    def convert_empty_price_range_to_none(cls, v):
+        """Convert empty arrays to None for price_range."""
+        if isinstance(v, list) and len(v) == 0:
+            return None
+        return v
+    
+    @field_validator('keywords', mode='before')
+    @classmethod
+    def convert_empty_keywords_to_none(cls, v):
+        """Convert empty arrays to None for keywords."""
+        if isinstance(v, list) and len(v) == 0:
+            return None
+        return v
 
 
 class EventCreate(EventBase):

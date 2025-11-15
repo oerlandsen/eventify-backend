@@ -1,0 +1,7 @@
+## Home screen
+
+- selector de fecha
+- parte con un get de eventos, paginados en las coordenadas que se ven en la pantalla 
+- get de neighrhood
+- filtrar eventos por fecha
+- filtrar por  

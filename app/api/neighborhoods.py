@@ -9,6 +9,7 @@ from app.models.schemas import (
     NeighborhoodUpdate
 )
 from app.services.neighborhood_service import NeighborhoodService
+from app.services.venue_service import VenueService
 
 router = APIRouter(prefix="/neighborhoods", tags=["neighborhoods"])
 
@@ -22,6 +23,56 @@ async def get_neighborhoods(
     """Get all neighborhoods with pagination."""
     neighborhoods = NeighborhoodService.get_neighborhoods(db, skip=skip, limit=limit)
     return neighborhoods
+
+
+@router.get("/map", response_model=List[Neighborhood], status_code=status.HTTP_200_OK)
+async def get_neighborhoods_by_map_bounds(
+    min_lat: float = Query(..., description="Minimum latitude (south boundary)", ge=-90, le=90),
+    max_lat: float = Query(..., description="Maximum latitude (north boundary)", ge=-90, le=90),
+    min_lon: float = Query(..., description="Minimum longitude (west boundary)", ge=-180, le=180),
+    max_lon: float = Query(..., description="Maximum longitude (east boundary)", ge=-180, le=180),
+    skip: int = Query(0, ge=0, description="Number of records to skip"),
+    limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
+    db: Session = Depends(get_db)
+):
+    """
+    Get neighborhoods within a geographic bounding box.
+    
+    Returns neighborhoods with coordinates within the specified map bounds.
+    Requires all four boundary parameters (min_lat, max_lat, min_lon, max_lon).
+    """
+    # Validate bounds
+    if min_lat >= max_lat:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="min_lat must be less than max_lat"
+        )
+    
+    if min_lon >= max_lon:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="min_lon must be less than max_lon"
+        )
+    
+    neighborhoods = NeighborhoodService.get_neighborhoods_by_bounds(
+        db,
+        min_lat=min_lat,
+        max_lat=max_lat,
+        min_lon=min_lon,
+        max_lon=max_lon,
+        skip=skip,
+        limit=limit
+    )
+    
+    return neighborhoods
+
+@router.get("/venue-types", response_model=List[str], status_code=status.HTTP_200_OK)
+async def get_all_types_of_venues(
+    neighborhood_id: int,
+    db: Session = Depends(get_db)
+):
+    """Get all types of venues."""
+    return VenueService.get_all_types_of_venues(neighborhood_id, db)
 
 
 @router.get("/{neighborhood_id}", response_model=Neighborhood, status_code=status.HTTP_200_OK)
@@ -79,4 +130,3 @@ async def delete_neighborhood(
             detail=f"Neighborhood with id {neighborhood_id} not found"
         )
     return None
-

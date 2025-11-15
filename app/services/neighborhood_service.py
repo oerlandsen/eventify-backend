@@ -3,6 +3,7 @@ from typing import List, Optional
 from sqlalchemy.orm import Session
 from app.db.models import Neighborhood
 from app.models.schemas import NeighborhoodCreate, NeighborhoodUpdate
+from app.services.coordinate_filter import filter_by_polygon_bounds
 
 
 class NeighborhoodService:
@@ -72,4 +73,39 @@ class NeighborhoodService:
         db.delete(db_neighborhood)
         db.commit()
         return True
+
+    @staticmethod
+    def get_neighborhoods_by_bounds(
+        db: Session,
+        min_lat: float,
+        max_lat: float,
+        min_lon: float,
+        max_lon: float,
+        skip: int = 0,
+        limit: int = 100
+    ) -> List[Neighborhood]:
+        """
+        Get neighborhoods within a geographic bounding box.
+        
+        Note: Neighborhoods have multiple coordinate pairs (polygons).
+        This filters neighborhoods where at least one coordinate pair intersects with the bounds.
+        
+        Args:
+            db: Database session
+            min_lat: Minimum latitude (south boundary)
+            max_lat: Maximum latitude (north boundary)
+            min_lon: Minimum longitude (west boundary)
+            max_lon: Maximum longitude (east boundary)
+            skip: Number of records to skip
+            limit: Maximum number of records to return
+            
+        Returns:
+            List of neighborhoods with coordinates intersecting the bounds
+        """
+        query = db.query(Neighborhood)
+        query = filter_by_polygon_bounds(
+            query, "neighborhoods", min_lat, max_lat, min_lon, max_lon
+        )
+        
+        return query.offset(skip).limit(limit).all()
 
