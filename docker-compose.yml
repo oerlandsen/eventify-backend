@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  api-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    container_name: eventify-api-dev
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      - ENVIRONMENT=development
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - eventify-network
+
+  db:
+    image: postgres:15
+    container_name: eventify-db
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=eventify
+      - POSTGRES_PASSWORD=eventify
+      - POSTGRES_DB=eventify
+    networks:
+      - eventify-network
+    volumes:
+      - eventify-db-data:/var/lib/postgresql/data
+
+networks:
+  eventify-network:
+    driver: bridge
+
+volumes:
+  eventify-db-data:
+
