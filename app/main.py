@@ -1,10 +1,11 @@
 """FastAPI application entry point."""
 import logging
 from fastapi import FastAPI
-from app.models.schemas import HealthResponse, Item
+from app.models.schemas import HealthResponse
 from app.db.base import Base, engine
 from app.config import settings
 from app.db import models  # Import models to register them with Base
+from app.api.router import api_router
 
 logger = logging.getLogger(__name__)
 
@@ -13,6 +14,9 @@ app = FastAPI(
     description="Eventify Backend API - Events Microservice",
     version=settings.APP_VERSION
 )
+
+# Include API routers
+app.include_router(api_router, prefix="/api")
 
 
 @app.on_event("startup")
