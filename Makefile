@@ -1,54 +1,33 @@
-.PHONY: help dev prod dev-build prod-build dev-up prod-up dev-down prod-down down logs-dev logs-prod clean
-
-help: ## Show this help message
-	@echo 'Usage: make [target]'
-	@echo ''
-	@echo 'Available targets:'
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-15s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
-
 dev-build: ## Build development Docker image
-	docker-compose build api-dev
-
-prod-build: ## Build production Docker image
-	docker-compose build api-prod
-
-dev-up: ## Start development container
-	docker-compose up -d api-dev
-
-prod-up: ## Start production container
-	docker-compose up -d api-prod
-
-dev: dev-build dev-up ## Build and start development container
-	@echo "Development server running at http://localhost:8000"
-	@echo "API docs available at http://localhost:8000/docs"
-
-prod: prod-build prod-up ## Build and start production container
-	@echo "Production server running at http://localhost:8001"
-	@echo "API docs available at http://localhost:8001/docs"
+	docker-compose up -d --build api-dev
 
 dev-down: ## Stop development container
-	docker-compose stop api-dev
-	docker-compose rm -f api-dev
+	docker-compose down api-dev
 
-prod-down: ## Stop production container
-	docker-compose stop api-prod
-	docker-compose rm -f api-prod
+up:
+	docker-compose up -d
 
-down: ## Stop all containers
-	docker-compose down
+# connect to the db container
+db-connect:
+	docker compose exec -it db psql -U eventify -d eventify
 
-logs-dev: ## View development container logs
-	docker-compose logs -f api-dev
+# run database seeds
+db-seed:
+	docker compose exec -T db psql -U eventify -d eventify < app/db/seed.sql
 
-logs-prod: ## View production container logs
-	docker-compose logs -f api-prod
+db-drop:
+	docker compose exec -T db psql -U eventify -d postgres -c "DROP DATABASE IF EXISTS eventify;"
 
-clean: ## Remove all containers, networks, and images
-	docker-compose down -v --rmi all
+db-create:
+	docker compose exec -T db psql -U eventify -d postgres -c "CREATE DATABASE eventify;"
 
-dev-shell: ## Open shell in development container
-	docker-compose exec api-dev /bin/bash
+db-fix-schema:
+	docker compose exec -T db psql -U eventify -d eventify -c "ALTER TABLE events ALTER COLUMN type DROP NOT NULL;"
 
-prod-shell: ## Open shell in production container
-	docker-compose exec api-prod /bin/bash
+db-reset:
+	docker compose exec -T db psql -U eventify -d postgres -c "DROP DATABASE IF EXISTS eventify;"
+	docker compose exec -T db psql -U eventify -d postgres -c "CREATE DATABASE eventify;"
+	docker compose restart api-dev
 
+db-clear:
+	docker compose exec -T db psql -U eventify -d eventify -c "TRUNCATE TABLE events, venues, neighborhoods CASCADE;"

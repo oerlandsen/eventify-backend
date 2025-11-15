@@ -13,7 +13,9 @@ services:
       - .:/app
     environment:
       - ENVIRONMENT=development
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir /app
+    depends_on:
+      - db
     networks:
       - eventify-network
 
@@ -30,6 +32,11 @@ services:
       - eventify-network
     volumes:
       - eventify-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U eventify"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 networks:
   eventify-network:
@@ -37,4 +44,3 @@ networks:
 
 volumes:
   eventify-db-data:
-
