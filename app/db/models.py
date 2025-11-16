@@ -24,7 +24,7 @@ class Venue(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False, index=True)
-    type = Column(String(50), nullable=False)  # Restaurant, Bar, Night club, etc.
+    venue_type = Column(String(50), nullable=False)  # Restaurant, Bar, Night club, etc.
     description = Column(Text, nullable=True)
     stars = Column(Float, nullable=True)  # Rating out of 10
     coordinates = Column(ARRAY(Float), nullable=False)  # [latitude, longitude]
@@ -45,7 +45,7 @@ class Event(Base):
     venue_id = Column(Integer, ForeignKey("venues.id"), nullable=True, index=True)
     name = Column(String(255), nullable=False, index=True)
     type = Column(String(50), nullable=True)  # Tour, Music, Outdoors, Festival
-    category = Column(String(100), nullable=False)  # Sports/park, Rock/jazz/etc, Music/art/food
+    category = Column(String(100), nullable=True)  # Sports/park, Rock/jazz/etc, Music/art/food
     keywords = Column(ARRAY(String), nullable=True)  # List of keywords
     description = Column(Text, nullable=True)
     price_range = Column(ARRAY(Float), nullable=True)  # [min_price, max_price]

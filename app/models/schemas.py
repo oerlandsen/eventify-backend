@@ -1,6 +1,6 @@
 """Pydantic schemas for request/response models."""
-from pydantic import BaseModel, Field
-from typing import Optional, List
+from pydantic import BaseModel, Field, field_validator
+from typing import Optional, List, Dict
 from datetime import datetime, time
 
 
@@ -41,7 +41,7 @@ class Neighborhood(NeighborhoodBase):
 class VenueBase(BaseModel):
     """Base venue schema."""
     name: str = Field(..., max_length=255)
-    type: str = Field(..., max_length=50)
+    venue_type: str = Field(..., max_length=50)
     description: Optional[str] = None
     stars: Optional[float] = Field(None, ge=0, le=10, description="Rating out of 10")
     coordinates: List[float] = Field(..., min_items=2, max_items=2, description="[latitude, longitude]")
@@ -57,7 +57,7 @@ class VenueCreate(VenueBase):
 class VenueUpdate(BaseModel):
     """Schema for updating a venue."""
     name: Optional[str] = Field(None, max_length=255)
-    type: Optional[str] = Field(None, max_length=50)
+    venue_type: Optional[str] = Field(None, max_length=50)
     description: Optional[str] = None
     stars: Optional[float] = Field(None, ge=0, le=10)
     coordinates: Optional[List[float]] = None
@@ -79,12 +79,28 @@ class EventBase(BaseModel):
     """Base event schema."""
     name: str = Field(..., max_length=255)
     type: Optional[str] = Field(None, max_length=50)
-    category: str = Field(..., max_length=100)
+    category: Optional[str] = Field(None, max_length=100)
     keywords: Optional[List[str]] = None
     description: Optional[str] = None
     price_range: Optional[List[float]] = Field(None, min_items=2, max_items=2, description="[min_price, max_price]")
     date: str = Field(..., max_length=50)
     venue_id: Optional[int] = None
+    
+    @field_validator('price_range', mode='before')
+    @classmethod
+    def convert_empty_price_range_to_none(cls, v):
+        """Convert empty arrays to None for price_range."""
+        if isinstance(v, list) and len(v) == 0:
+            return None
+        return v
+    
+    @field_validator('keywords', mode='before')
+    @classmethod
+    def convert_empty_keywords_to_none(cls, v):
+        """Convert empty arrays to None for keywords."""
+        if isinstance(v, list) and len(v) == 0:
+            return None
+        return v
 
 
 class EventCreate(EventBase):
@@ -111,3 +127,18 @@ class Event(EventBase):
 
     class Config:
         from_attributes = True
+
+
+# Search Response Schemas
+class SearchMeta(BaseModel):
+    """Metadata for search results."""
+    total_venues: int
+    total_events: int
+    filters_applied: Dict[str, Optional[str]] = Field(..., description="Dictionary of applied filters")
+
+
+class SearchResponse(BaseModel):
+    """Search results response schema."""
+    venues: List[Venue]
+    events: List[Event]
+    meta: SearchMeta

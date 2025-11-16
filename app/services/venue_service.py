@@ -33,7 +33,7 @@ class VenueService:
         """Create a new venue."""
         db_venue = Venue(
             name=venue.name,
-            type=venue.type,
+            venue_type=venue.venue_type,
             description=venue.description,
             stars=venue.stars,
             coordinates=venue.coordinates,
@@ -76,4 +76,10 @@ class VenueService:
         db.delete(db_venue)
         db.commit()
         return True
+    
+    @staticmethod
+    def get_all_types_of_venues(neighborhood_id: int, db: Session) -> List[str]:
+        """Get all types of venues."""
+        results = db.query(Venue.venue_type).filter(Venue.neighborhood_id == neighborhood_id).distinct().all()
+        return [row[0] for row in results if row[0] is not None]
 
