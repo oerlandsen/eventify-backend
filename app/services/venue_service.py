@@ -3,7 +3,6 @@ from typing import List, Optional
 from sqlalchemy.orm import Session
 from app.db.models import Venue
 from app.models.schemas import VenueCreate, VenueUpdate
-from app.services.coordinate_filter import filter_by_coordinate_bounds
 
 
 class VenueService:
@@ -34,7 +33,7 @@ class VenueService:
         """Create a new venue."""
         db_venue = Venue(
             name=venue.name,
-            type=venue.type,
+            venue_type=venue.venue_type,
             description=venue.description,
             stars=venue.stars,
             coordinates=venue.coordinates,
@@ -81,38 +80,6 @@ class VenueService:
     @staticmethod
     def get_all_types_of_venues(neighborhood_id: int, db: Session) -> List[str]:
         """Get all types of venues."""
-        results = db.query(Venue.type).filter(Venue.neighborhood_id == neighborhood_id).distinct().all()
+        results = db.query(Venue.venue_type).filter(Venue.neighborhood_id == neighborhood_id).distinct().all()
         return [row[0] for row in results if row[0] is not None]
-
-    @staticmethod
-    def get_venues_by_bounds(
-        db: Session,
-        min_lat: float,
-        max_lat: float,
-        min_lon: float,
-        max_lon: float,
-        skip: int = 0,
-        limit: int = 100
-    ) -> List[Venue]:
-        """
-        Get venues within a geographic bounding box.
-        
-        Args:
-            db: Database session
-            min_lat: Minimum latitude (south boundary)
-            max_lat: Maximum latitude (north boundary)
-            min_lon: Minimum longitude (west boundary)
-            max_lon: Maximum longitude (east boundary)
-            skip: Number of records to skip
-            limit: Maximum number of records to return
-            
-        Returns:
-            List of venues within the bounds
-        """
-        query = db.query(Venue)
-        query = filter_by_coordinate_bounds(
-            query, "venues", min_lat, max_lat, min_lon, max_lon
-        )
-        
-        return query.offset(skip).limit(limit).all()
 

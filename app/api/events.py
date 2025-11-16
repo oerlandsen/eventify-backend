@@ -24,48 +24,6 @@ async def get_events(
     return events
 
 
-@router.get("/map", response_model=List[Event], status_code=status.HTTP_200_OK)
-async def get_events_by_map_bounds(
-    min_lat: float = Query(..., description="Minimum latitude (south boundary)", ge=-90, le=90),
-    max_lat: float = Query(..., description="Maximum latitude (north boundary)", ge=-90, le=90),
-    min_lon: float = Query(..., description="Minimum longitude (west boundary)", ge=-180, le=180),
-    max_lon: float = Query(..., description="Maximum longitude (east boundary)", ge=-180, le=180),
-    skip: int = Query(0, ge=0, description="Number of records to skip"),
-    limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
-    db: Session = Depends(get_db)
-):
-    """
-    Get events within a geographic bounding box.
-    
-    Returns events whose venues are located within the specified map bounds.
-    Requires all four boundary parameters (min_lat, max_lat, min_lon, max_lon).
-    """
-    # Validate bounds
-    if min_lat >= max_lat:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="min_lat must be less than max_lat"
-        )
-    
-    if min_lon >= max_lon:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="min_lon must be less than max_lon"
-        )
-    
-    events = EventService.get_events_by_bounds(
-        db,
-        min_lat=min_lat,
-        max_lat=max_lat,
-        min_lon=min_lon,
-        max_lon=max_lon,
-        skip=skip,
-        limit=limit
-    )
-    
-    return events
-
-
 @router.get("/{event_id}", response_model=Event, status_code=status.HTTP_200_OK)
 async def get_event(
     event_id: int,

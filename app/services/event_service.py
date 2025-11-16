@@ -1,9 +1,8 @@
 """Event service layer."""
 from typing import List, Optional
-from sqlalchemy.orm import Session, joinedload
-from app.db.models import Event, Venue
+from sqlalchemy.orm import Session
+from app.db.models import Event
 from app.models.schemas import EventCreate, EventUpdate
-from app.services.coordinate_filter import filter_by_coordinate_bounds
 
 
 class EventService:
@@ -82,38 +81,4 @@ class EventService:
         db.delete(db_event)
         db.commit()
         return True
-
-    @staticmethod
-    def get_events_by_bounds(
-        db: Session,
-        min_lat: float,
-        max_lat: float,
-        min_lon: float,
-        max_lon: float,
-        skip: int = 0,
-        limit: int = 100
-    ) -> List[Event]:
-        """
-        Get events within a geographic bounding box.
-        
-        Args:
-            db: Database session
-            min_lat: Minimum latitude (south boundary)
-            max_lat: Maximum latitude (north boundary)
-            min_lon: Minimum longitude (west boundary)
-            max_lon: Maximum longitude (east boundary)
-            skip: Number of records to skip
-            limit: Maximum number of records to return
-            
-        Returns:
-            List of events with venues within the bounds
-        """
-        # Join Event with Venue and filter by coordinates
-        query = db.query(Event).join(Venue, Event.venue_id == Venue.id)
-        query = filter_by_coordinate_bounds(
-            query, "venues", min_lat, max_lat, min_lon, max_lon
-        )
-        query = query.options(joinedload(Event.venue))
-        
-        return query.offset(skip).limit(limit).all()
 
